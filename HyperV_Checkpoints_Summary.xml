@@ -1,0 +1,587 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<feed  version="1.0" hasPendingRequests="false" >
+  <company></company>
+  <status>200</status>
+  <errmsg>OK</errmsg>
+  <interval>0</interval>
+    <entry type="predatasource">
+        <version>1557996795</version>
+        <name>HyperV Checkpoints Summary</name>
+        <displayedas>HyperV Checkpoints Summary</displayedas>
+        <description>shows age (seconds &#38; days), depth, and quantity. By Mike Suding</description>
+        <collector>batchscript</collector>
+        <hasMultiInstances>true</hasMultiInstances>
+        <schedule>900</schedule>
+        <appliesTo>hasCategory(&#34;HyperV&#34;)</appliesTo>
+        <wildcardauto>true</wildcardauto>
+        <wildcardpersist>false</wildcardpersist>
+        <wildcardlinuxscript>ad_script</wildcardlinuxscript>
+        <wildcardlinuxcmdline>type=&#34;powerShell&#34; </wildcardlinuxcmdline>
+        <wildcardwinscript>ad_script</wildcardwinscript>
+        <wildcardwincmdline>type=&#34;powerShell&#34; </wildcardwincmdline>
+        <wildcardgroovyscript>$TargetHostName = &#39;##SYSTEM.SYSNAME##&#39;
+$CollectorHostName = $env:computername
+$TargetUserName = &#39;##wmi.user##&#39;
+$TargetPassword = &#39;##wmi.pass##&#39;
+$ScriptBlock = {
+
+    Try
+    {
+        $AllVirtualMachines = Get-VM
+
+        foreach ($Vm in $AllVirtualMachines)
+        {
+            #check if VM has snapshots
+            if ($Vm.ParentCheckpointId)
+            {
+                $CurrentCheckpointnName = $Vm.ParentCheckpointName
+            }
+
+            #No Checkpoints - checkpoint name = null
+            else
+            {
+                $CurrentCheckpointnName = &#34;Null&#34;
+            }
+
+            Write-Host &#34;$($Vm.Id)##$($Vm.Name)######CurrentCheckpoint=$CurrentCheckpointnName&#34;
+        }
+    }
+    Catch
+    {
+        #In case of error - create new instance with error description
+        Write-Host &#34;ERROR##$($_.FullyQualifiedErrorId): $($_.Exception.Message)&#34;
+    }
+}
+
+if ($TargetHostName -eq $CollectorHostName)
+{
+    Invoke-Command -ScriptBlock $ScriptBlock
+}
+else
+{
+    if ($TargetUserName -Match &#34;wmi.user&#34; -and $TargetPassword -Match &#34;wmi.pass&#34;)
+    {
+        Invoke-Command -ComputerName $TargetHostName -ScriptBlock $ScriptBlock
+    }
+    else
+    {
+        $TargetCredentials = New-Object System.Management.Automation.PSCredential ($TargetUserName, $(ConvertTo-SecureString $TargetPassword -AsPlainText -Force))
+        Invoke-Command -ComputerName $TargetHostName -ScriptBlock $ScriptBlock -Credential $TargetCredentials
+    }
+}
+exit 0</wildcardgroovyscript>
+        <wildcardschedule>15</wildcardschedule>
+        <wildcarddisable>false</wildcarddisable>
+        <wildcarddeleteinactive>true</wildcarddeleteinactive>
+        <agdmethod>none</agdmethod>
+        <agdparams></agdparams>
+        <group></group>
+        <tags></tags>
+        <technology></technology>
+        <adlist><![CDATA[{"agdmethod":"none","method":"ad_script","agdparams":"","id":0,"filters":[],"params":{"type":"powerShell","groovyscript":"$TargetHostName = '##SYSTEM.SYSNAME##'\n$CollectorHostName = $env:computername\n$TargetUserName = '##wmi.user##'\n$TargetPassword = '##wmi.pass##'\n$ScriptBlock = {\n\n    Try\n    {\n        $AllVirtualMachines = Get-VM\n\n        foreach ($Vm in $AllVirtualMachines)\n        {\n            #check if VM has snapshots\n            if ($Vm.ParentCheckpointId)\n            {\n                $CurrentCheckpointnName = $Vm.ParentCheckpointName\n            }\n\n            #No Checkpoints - checkpoint name = null\n            else\n            {\n                $CurrentCheckpointnName = \"Null\"\n            }\n\n            Write-Host \"$($Vm.Id)##$($Vm.Name)######CurrentCheckpoint=$CurrentCheckpointnName\"\n        }\n    }\n    Catch\n    {\n        #In case of error - create new instance with error description\n        Write-Host \"ERROR##$($_.FullyQualifiedErrorId): $($_.Exception.Message)\"\n    }\n}\n\nif ($TargetHostName -eq $CollectorHostName)\n{\n    Invoke-Command -ScriptBlock $ScriptBlock\n}\nelse\n{\n    if ($TargetUserName -Match \"wmi.user\" -and $TargetPassword -Match \"wmi.pass\")\n    {\n        Invoke-Command -ComputerName $TargetHostName -ScriptBlock $ScriptBlock\n    }\n    else\n    {\n        $TargetCredentials = New-Object System.Management.Automation.PSCredential ($TargetUserName, $(ConvertTo-SecureString $TargetPassword -AsPlainText -Force))\n        Invoke-Command -ComputerName $TargetHostName -ScriptBlock $ScriptBlock -Credential $TargetCredentials\n    }\n}\nexit 0"}}]]></adlist>
+        <schemaVersion>2</schemaVersion>
+        <dataSourceType>1</dataSourceType>
+        <attributes>
+        <attribute>
+            <name>scripttype</name>
+            <value>powerShell</value>
+            <comment></comment>
+        </attribute>
+        <attribute>
+            <name>scriptgroovy</name>
+            <value>$TargetHostName = &#39;##SYSTEM.SYSNAME##&#39;
+$CollectorHostName = $env:computername
+$TargetUserName = &#39;##wmi.user##&#39;
+$TargetPassword = &#39;##wmi.pass##&#39;
+
+$ScriptBlock = {
+
+    Try
+    {
+        $AllVirtualMachines = Get-VM
+
+        $CurrentTime = Get-Date
+
+        foreach ($Vm in $AllVirtualMachines)
+        {
+            #check if VM has snapshots
+            if ($Vm.ParentCheckpointId)
+            {
+                #Get All checkpoints, find current, count total checkpoints
+                $VmAllCheckpoints = Get-VMCheckpoint -VMName $Vm.Name
+                $CurrentCheckpoint = $VmAllCheckpoints | Where-Object {$_.Id -eq $Vm.ParentCheckpointId}
+                $TotalCheckpoints = $VmAllCheckpoints.Count
+
+                #Find first sheckpoint in chain, count checkpoints in chain
+                $LookUpCheckpoint = $CurrentCheckpoint
+                $CheckpointsDepth = 1
+                while ($LookUpCheckpoint.ParentCheckpointId)
+                {
+                    $LookUpCheckpoint = $VmAllCheckpoints | Where-Object {$_.Id -eq $LookUpCheckpoint.ParentCheckpointId}
+                    $CheckpointsDepth++
+                }
+
+                #Age of first checkpoint in chain
+                $VMFirstCheckpointTimeUnForm = (New-TimeSpan -Start $LookUpCheckpoint.CreationTime -End $CurrentTime).TotalSeconds
+                $VMFirstCheckpointTime = [Math]::Round($VMFirstCheckpointTimeUnForm)
+
+                #Age Of Current checkpoin
+                $VMCheckpointTimeUnForm = (New-TimeSpan -Start $CurrentCheckpoint.CreationTime -End $CurrentTime).TotalSeconds
+                $VMCheckpointTime = [Math]::Round($VMCheckpointTimeUnForm)
+
+                #File size of current checkpoint
+                $VMCheckpointSize = ($CurrentCheckpoint | Get-VMHardDiskDrive | Get-VHD | Select-Object -ExpandProperty Filesize | Measure-Object -Sum | Select-Object -ExpandProperty Sum) / 1MB
+            }
+
+            #No Checkpoints - Count is 0; time = VM time; depth = 0; first checkpoint = 0; size = 0
+            else
+            {
+                $TotalCheckpoints = 0
+                $CheckpointsDepth = 0
+                $VMFirstCheckpointTime = 0
+                $VMCheckpointSize = 0
+                $VMCheckpointTime = 0
+            }
+
+            #Write all data for given VM
+            Write-Host &#34;$($Vm.Id).TotalCheckpoints=$TotalCheckpoints&#34;
+            Write-Host &#34;$($Vm.Id).CheckpointsDepth=$CheckpointsDepth&#34;
+            Write-Host &#34;$($Vm.Id).FirstCheckpointAge=$VMFirstCheckpointTime&#34;
+            Write-Host &#34;$($Vm.Id).CheckpointSizeMb=$VMCheckpointSize&#34;
+            Write-Host &#34;$($Vm.Id).CheckpointAge=$VMCheckpointTime&#34;
+        }
+    }
+    Catch
+    {
+         Write-Error &#34;$($_.FullyQualifiedErrorId) $($_.Exception.Message)&#34;
+    }
+}
+
+if ($TargetHostName -eq $CollectorHostName)
+{
+    Invoke-Command -ScriptBlock $ScriptBlock
+}
+else
+{
+    if ($TargetUserName -and $TargetPassword)
+    {
+        $TargetCredentials = New-Object System.Management.Automation.PSCredential ($TargetUserName, $(ConvertTo-SecureString $TargetPassword -AsPlainText -Force))
+        Invoke-Command -ComputerName $TargetHostName -ScriptBlock $ScriptBlock -Credential $TargetCredentials
+    }
+    else
+    {
+        Invoke-Command -ComputerName $TargetHostName -ScriptBlock $ScriptBlock
+    }
+}
+exit 0</value>
+            <comment></comment>
+        </attribute>
+        <attribute>
+            <name>windowsscript</name>
+            <value></value>
+            <comment></comment>
+        </attribute>
+        <attribute>
+            <name>linuxscript</name>
+            <value></value>
+            <comment></comment>
+        </attribute>
+        <attribute>
+            <name>windowscmdline</name>
+            <value></value>
+            <comment></comment>
+        </attribute>
+        <attribute>
+            <name>linuxcmdline</name>
+            <value></value>
+            <comment></comment>
+        </attribute>
+        <attribute>
+            <name>eridetectioninterval</name>
+            <value>15</value>
+            <comment></comment>
+        </attribute>
+        <attribute>
+            <name>eriscripttype</name>
+            <value>powerShell</value>
+            <comment></comment>
+        </attribute>
+        <attribute>
+            <name>eriscriptgroovy</name>
+            <value>$TargetHostName = &#39;##SYSTEM.SYSNAME##&#39;
+$CollectorHostName = $env:computername
+$TargetUserName = &#39;##wmi.user##&#39;
+$TargetPassword = &#39;##wmi.pass##&#39;
+
+$ScriptBlock = {
+
+    Try
+    {
+        $AllVirtualMachines = Get-VM
+
+        foreach ($Vm in $AllVirtualMachines)
+        {
+            #check if VM has snapshots
+            if ($Vm.ParentCheckpointId)
+            {
+                $CurrentCheckpointnName = $Vm.ParentCheckpointName
+            }
+
+            #No Checkpoints - checkpoint name = null
+            else
+            {
+                $CurrentCheckpointnName = &#34;Null&#34;
+            }
+
+            Write-Host &#34;$($Vm.Id)##$($Vm.Name)######CurrentCheckpoint=$CurrentCheckpointnName&#34;
+        }
+    }
+    Catch
+    {
+        #In case of error - create new instance with error description
+        Write-Host &#34;ERROR##$($_.FullyQualifiedErrorId): $($_.Exception.Message)&#34;
+    }
+}
+
+if ($TargetHostName -eq $CollectorHostName)
+{
+    Invoke-Command -ScriptBlock $ScriptBlock
+}
+else
+{
+    if ($TargetUserName -and $TargetPassword)
+    {
+        $TargetCredentials = New-Object System.Management.Automation.PSCredential ($TargetUserName, $(ConvertTo-SecureString $TargetPassword -AsPlainText -Force))
+        Invoke-Command -ComputerName $TargetHostName -ScriptBlock $ScriptBlock -Credential $TargetCredentials
+    }
+    else
+    {
+        Invoke-Command -ComputerName $TargetHostName -ScriptBlock $ScriptBlock
+    }
+}
+exit 0</value>
+            <comment></comment>
+        </attribute>
+        <attribute>
+            <name>eriwinscript</name>
+            <value></value>
+            <comment></comment>
+        </attribute>
+        <attribute>
+            <name>erilinuxscript</name>
+            <value></value>
+            <comment></comment>
+        </attribute>
+        <attribute>
+            <name>eriwincmdline</name>
+            <value></value>
+            <comment></comment>
+        </attribute>
+        <attribute>
+            <name>erilinuxcmdline</name>
+            <value></value>
+            <comment></comment>
+        </attribute>
+        </attributes>
+        <datapoints>
+        <datapoint>
+            <name>ExitCode</name>
+            <dataType>4</dataType>
+            <type>2</type>
+            <postprocessormethod>none</postprocessormethod>
+            <postprocessorparam></postprocessorparam>
+            <usevalue>exitCode</usevalue>
+            <alertexpr>!= 0 0 timezone=Europe/London</alertexpr>
+            <alertmissing>1</alertmissing>
+            <alertsubject></alertsubject>
+            <alertbody></alertbody>
+            <description></description>
+            <maxvalue></maxvalue>
+            <minvalue></minvalue>
+            <userparam1></userparam1>
+            <userparam2></userparam2>
+            <userparam3></userparam3>
+            <iscomposite>false</iscomposite>
+            <rpn></rpn>
+            <alertTransitionIval>0</alertTransitionIval>
+            <alertClearTransitionIval>0</alertClearTransitionIval>
+        </datapoint>
+        <datapoint>
+            <name>Age_current_checkpoint</name>
+            <dataType>7</dataType>
+            <type>2</type>
+            <postprocessormethod>namevalue</postprocessormethod>
+            <postprocessorparam>##wildvalue##.CheckpointAge</postprocessorparam>
+            <usevalue>output</usevalue>
+            <alertexpr></alertexpr>
+            <alertmissing>1</alertmissing>
+            <alertsubject></alertsubject>
+            <alertbody></alertbody>
+            <description>in seconds</description>
+            <maxvalue></maxvalue>
+            <minvalue></minvalue>
+            <userparam1></userparam1>
+            <userparam2></userparam2>
+            <userparam3></userparam3>
+            <iscomposite>false</iscomposite>
+            <rpn></rpn>
+            <alertTransitionIval>0</alertTransitionIval>
+            <alertClearTransitionIval>0</alertClearTransitionIval>
+        </datapoint>
+        <datapoint>
+            <name>CheckpointsDepth</name>
+            <dataType>7</dataType>
+            <type>2</type>
+            <postprocessormethod>namevalue</postprocessormethod>
+            <postprocessorparam>##wildvalue##.CheckpointsDepth</postprocessorparam>
+            <usevalue>output</usevalue>
+            <alertexpr>&#62; 9 timezone=Europe/London</alertexpr>
+            <alertmissing>1</alertmissing>
+            <alertsubject></alertsubject>
+            <alertbody></alertbody>
+            <description></description>
+            <maxvalue></maxvalue>
+            <minvalue></minvalue>
+            <userparam1></userparam1>
+            <userparam2></userparam2>
+            <userparam3></userparam3>
+            <iscomposite>false</iscomposite>
+            <rpn></rpn>
+            <alertTransitionIval>0</alertTransitionIval>
+            <alertClearTransitionIval>0</alertClearTransitionIval>
+        </datapoint>
+        <datapoint>
+            <name>CheckpointSizeMb</name>
+            <dataType>7</dataType>
+            <type>2</type>
+            <postprocessormethod>namevalue</postprocessormethod>
+            <postprocessorparam>##wildvalue##.CheckpointSizeMb</postprocessorparam>
+            <usevalue>output</usevalue>
+            <alertexpr></alertexpr>
+            <alertmissing>1</alertmissing>
+            <alertsubject></alertsubject>
+            <alertbody></alertbody>
+            <description>MB size of the current checkpoint</description>
+            <maxvalue></maxvalue>
+            <minvalue></minvalue>
+            <userparam1></userparam1>
+            <userparam2></userparam2>
+            <userparam3></userparam3>
+            <iscomposite>false</iscomposite>
+            <rpn></rpn>
+            <alertTransitionIval>0</alertTransitionIval>
+            <alertClearTransitionIval>0</alertClearTransitionIval>
+        </datapoint>
+        <datapoint>
+            <name>Age_first_checkpoint</name>
+            <dataType>7</dataType>
+            <type>2</type>
+            <postprocessormethod>namevalue</postprocessormethod>
+            <postprocessorparam>##wildvalue##.FirstCheckpointAge</postprocessorparam>
+            <usevalue>output</usevalue>
+            <alertexpr></alertexpr>
+            <alertmissing>1</alertmissing>
+            <alertsubject></alertsubject>
+            <alertbody></alertbody>
+            <description>age of the first checkpoint in seconds. It might be same as current checkpoint</description>
+            <maxvalue></maxvalue>
+            <minvalue></minvalue>
+            <userparam1></userparam1>
+            <userparam2></userparam2>
+            <userparam3></userparam3>
+            <iscomposite>false</iscomposite>
+            <rpn></rpn>
+            <alertTransitionIval>0</alertTransitionIval>
+            <alertClearTransitionIval>0</alertClearTransitionIval>
+        </datapoint>
+        <datapoint>
+            <name>TotalCheckpoints</name>
+            <dataType>7</dataType>
+            <type>2</type>
+            <postprocessormethod>namevalue</postprocessormethod>
+            <postprocessorparam>##wildvalue##.TotalCheckpoints</postprocessorparam>
+            <usevalue>output</usevalue>
+            <alertexpr></alertexpr>
+            <alertmissing>1</alertmissing>
+            <alertsubject></alertsubject>
+            <alertbody></alertbody>
+            <description></description>
+            <maxvalue></maxvalue>
+            <minvalue></minvalue>
+            <userparam1></userparam1>
+            <userparam2></userparam2>
+            <userparam3></userparam3>
+            <iscomposite>false</iscomposite>
+            <rpn></rpn>
+            <alertTransitionIval>0</alertTransitionIval>
+            <alertClearTransitionIval>0</alertClearTransitionIval>
+        </datapoint>
+        <datapoint>
+            <name>Age_first_checkpoint_days</name>
+            <dataType>7</dataType>
+            <type>2</type>
+            <postprocessormethod>expression</postprocessormethod>
+            <postprocessorparam>round(Age_first_checkpoint/86400)</postprocessorparam>
+            <usevalue></usevalue>
+            <alertexpr></alertexpr>
+            <alertmissing>1</alertmissing>
+            <alertsubject></alertsubject>
+            <alertbody></alertbody>
+            <description>instead of seconds...more useful</description>
+            <maxvalue></maxvalue>
+            <minvalue></minvalue>
+            <userparam1></userparam1>
+            <userparam2></userparam2>
+            <userparam3></userparam3>
+            <iscomposite>false</iscomposite>
+            <rpn></rpn>
+            <alertTransitionIval>0</alertTransitionIval>
+            <alertClearTransitionIval>0</alertClearTransitionIval>
+        </datapoint>
+        <datapoint>
+            <name>ms_it_took</name>
+            <dataType>4</dataType>
+            <type>2</type>
+            <postprocessormethod>none</postprocessormethod>
+            <postprocessorparam></postprocessorparam>
+            <usevalue>responseTime</usevalue>
+            <alertexpr>&#62; 9999 timezone=Europe/London</alertexpr>
+            <alertmissing>1</alertmissing>
+            <alertsubject></alertsubject>
+            <alertbody></alertbody>
+            <description>milliseconds it took to run this script</description>
+            <maxvalue></maxvalue>
+            <minvalue></minvalue>
+            <userparam1></userparam1>
+            <userparam2></userparam2>
+            <userparam3></userparam3>
+            <iscomposite>false</iscomposite>
+            <rpn></rpn>
+            <alertTransitionIval>0</alertTransitionIval>
+            <alertClearTransitionIval>0</alertClearTransitionIval>
+        </datapoint>
+        </datapoints>
+        <graphs>
+        <graph>
+            <name>Age of oldest checkpoint (days)</name>
+            <title>Age of oldest checkpoint (days)</title>
+            <verticallabel>days</verticallabel>
+            <rigid>false</rigid>
+            <maxvalue>NaN</maxvalue>
+            <minvalue>0.0</minvalue>
+            <displayprio>2</displayprio>
+            <timescale>1week</timescale>
+            <base1024>false</base1024>
+            <graphdatapoints>
+        <graphdatapoint>
+            <name>Age_first_checkpoint_days</name>
+            <datapointname>Age_first_checkpoint_days</datapointname>
+            <cf>1</cf>
+        </graphdatapoint>
+            </graphdatapoints>
+            <graphvirtualdatapoints>
+            </graphvirtualdatapoints>
+            <graphdatas>
+            <graphdata>
+                <type>2</type>
+                <legend>Age_first_checkpoint_days</legend>
+                <color>red2</color>
+                <datapointname>Age_first_checkpoint_days</datapointname>
+                <isvirtualdatapoint>false</isvirtualdatapoint>
+            </graphdata>
+            </graphdatas>
+        </graph>
+        <graph>
+            <name>Depth of checkpoints</name>
+            <title>Depth of checkpoints</title>
+            <verticallabel>count</verticallabel>
+            <rigid>false</rigid>
+            <maxvalue>NaN</maxvalue>
+            <minvalue>0.0</minvalue>
+            <displayprio>1</displayprio>
+            <timescale>1week</timescale>
+            <base1024>false</base1024>
+            <graphdatapoints>
+        <graphdatapoint>
+            <name>CheckpointsDepth</name>
+            <datapointname>CheckpointsDepth</datapointname>
+            <cf>1</cf>
+        </graphdatapoint>
+            </graphdatapoints>
+            <graphvirtualdatapoints>
+            </graphvirtualdatapoints>
+            <graphdatas>
+            <graphdata>
+                <type>2</type>
+                <legend>CheckpointsDepth</legend>
+                <color>silver</color>
+                <datapointname>CheckpointsDepth</datapointname>
+                <isvirtualdatapoint>false</isvirtualdatapoint>
+            </graphdata>
+            </graphdatas>
+        </graph>
+        <graph>
+            <name>Size of current checkpoint (MB)</name>
+            <title>Size of current checkpoint (MB)</title>
+            <verticallabel>MegaBytes</verticallabel>
+            <rigid>false</rigid>
+            <maxvalue>NaN</maxvalue>
+            <minvalue>0.0</minvalue>
+            <displayprio>1</displayprio>
+            <timescale>1week</timescale>
+            <base1024>false</base1024>
+            <graphdatapoints>
+        <graphdatapoint>
+            <name>CheckpointSizeMb</name>
+            <datapointname>CheckpointSizeMb</datapointname>
+            <cf>1</cf>
+        </graphdatapoint>
+            </graphdatapoints>
+            <graphvirtualdatapoints>
+            </graphvirtualdatapoints>
+            <graphdatas>
+            <graphdata>
+                <type>2</type>
+                <legend>CheckpointSizeMb</legend>
+                <color>orange</color>
+                <datapointname>CheckpointSizeMb</datapointname>
+                <isvirtualdatapoint>false</isvirtualdatapoint>
+            </graphdata>
+            </graphdatas>
+        </graph>
+        <graph>
+            <name>Total qty of checkpoints</name>
+            <title>Total qty of checkpoints</title>
+            <verticallabel>count</verticallabel>
+            <rigid>false</rigid>
+            <maxvalue>NaN</maxvalue>
+            <minvalue>0.0</minvalue>
+            <displayprio>4</displayprio>
+            <timescale>1week</timescale>
+            <base1024>false</base1024>
+            <graphdatapoints>
+        <graphdatapoint>
+            <name>TotalCheckpoints</name>
+            <datapointname>TotalCheckpoints</datapointname>
+            <cf>1</cf>
+        </graphdatapoint>
+            </graphdatapoints>
+            <graphvirtualdatapoints>
+            </graphvirtualdatapoints>
+            <graphdatas>
+            <graphdata>
+                <type>2</type>
+                <legend>TotalCheckpoints</legend>
+                <color>teal</color>
+                <datapointname>TotalCheckpoints</datapointname>
+                <isvirtualdatapoint>false</isvirtualdatapoint>
+            </graphdata>
+            </graphdatas>
+        </graph>
+        </graphs>
+        <overviewgraphs>
+        </overviewgraphs>
+        <scripts>
+        </scripts>
+    </entry>
+</feed>
